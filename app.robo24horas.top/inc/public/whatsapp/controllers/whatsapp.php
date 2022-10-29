@@ -1,5 +1,6 @@
 <?php
-class whatsapp extends MY_Controller {
+class whatsapp extends MY_Controller
+{
 
 	public $tb_team = 'sp_team';
 	public $tb_whatsapp_schedules = "sp_whatsapp_schedules";
@@ -13,17 +14,18 @@ class whatsapp extends MY_Controller {
 
 	public $module_name;
 
-	public function __construct(){
+	public function __construct()
+	{
 		parent::__construct();
-		_permission(get_class($this)."_enable");
-		$this->load->model(get_class($this).'_model', 'model');
+		_permission(get_class($this) . "_enable");
+		$this->load->model(get_class($this) . '_model', 'model');
 
 		$module_path = get_module_directory(__DIR__);
-		include $module_path.'libraries/vendor/autoload.php';
+		include $module_path . 'libraries/vendor/autoload.php';
 
 		//
-		$this->module_name = get_module_config( $this, 'name' );
-		$this->module_icon = get_module_config( $this, 'icon' );
+		$this->module_name = get_module_config($this, 'name');
+		$this->module_icon = get_module_config($this, 'icon');
 		//
 	}
 
@@ -31,12 +33,12 @@ class whatsapp extends MY_Controller {
 	{
 		$team_id = _t('id');
 		$result = [];
-		$page_type = is_ajax()?false:true;
+		$page_type = is_ajax() ? false : true;
 
 		$accounts = $this->model->fetch("*", $this->tb_account_manager, "team_id = '{$team_id}' AND status = 1 AND social_network = 'whatsapp'");
 
 		//
-		$data = [  'accounts' => $accounts, 'access_token' => _s("team_id") ];
+		$data = ['accounts' => $accounts, 'access_token' => _s("team_id")];
 		switch ($page) {
 			case 'update':
 				$data['result'] = $result;
@@ -50,28 +52,29 @@ class whatsapp extends MY_Controller {
 		$page = page($this, "pages", "general", $page, $data, $page_type);
 		//
 
-		if( !is_ajax() ){
+		if (!is_ajax()) {
 
 			$views = [
-				"subheader" => view( 'main/subheader', [ 'module_name' => $this->module_name, 'module_icon' => $this->module_icon ], true ),
-				"column_one" => view("main/content", [ 'view' => $page ] ,true), 
+				"subheader" => view('main/subheader', ['module_name' => $this->module_name, 'module_icon' => $this->module_icon], true),
+				"column_one" => view("main/content", ['view' => $page], true),
 			];
-			
-			views( [
+
+			views([
 				"title" => $this->module_name,
 				"fragment" => "fragment_one",
 				"views" => $views
-			] );
-
-		}else{
-			_e( $page, false );
+			]);
+		} else {
+			_e($page, false);
 		}
-
 	}
 
-	public function block(){}
+	public function block()
+	{
+	}
 
-	public function get($page = ""){
+	public function get($page = "")
+	{
 		$team_id = _t('id');
 		$instance_id = addslashes(post("instance_id"));
 		$access_token = addslashes(post("access_token"));
@@ -86,92 +89,92 @@ class whatsapp extends MY_Controller {
 
 		switch ($page) {
 			case 'menu':
-				$result = json_decode( wa_get_curl( $server_url."instance?instance_id=".$instance_id."&access_token=".$access_token ) );
-				if(!empty($result)){
-					if($result->status == "success"){
-						if($result->data->avatar){
-                            $avatar = save_img( $result->data->avatar, TMP_PATH.'avatar/' );
-                            $this->model->update(
-								$this->tb_account_manager, 
+				$result = json_decode(wa_get_curl($server_url . "instance?instance_id=" . $instance_id . "&access_token=" . $access_token));
+				if (!empty($result)) {
+					if ($result->status == "success") {
+						if ($result->data->avatar) {
+							$avatar = save_img($result->data->avatar, TMP_PATH . 'avatar/');
+							$this->model->update(
+								$this->tb_account_manager,
 								[
 									"avatar" => $avatar,
-								], 
+								],
 								array("token" => $instance_id)
 							);
-                        }
+						}
 
 						wa_ms([
 							"status" => "success",
 							"message" => __('Success'),
 							"submenu" => false,
 							"data" => $result->data,
-							"content" => view("pages/sub/menu", [ 'instance_id' => $instance_id, 'access_token' => $access_token ], true)
-		 				]);
-					}else{
+							"content" => view("pages/sub/menu", ['instance_id' => $instance_id, 'access_token' => $access_token], true)
+						]);
+					} else {
 						wa_ms([
 							"status" => "error",
-							"relogin" => isset($result->relogin)?1:0,
+							"relogin" => isset($result->relogin) ? 1 : 0,
 							"message" => __($result->message)
-		 				]);
+						]);
 					}
-				}else{
+				} else {
 					wa_ms([
 						"status" => "error",
 						"message" => __("Cannot connect to server. Please try again later")
-	 				]);
+					]);
 				}
-				
+
 				break;
 
 			case 'profile':
-				$result = json_decode( wa_get_curl( $server_url."instance?instance_id=".$instance_id."&access_token=".$access_token ) );
-				if(!empty($result)){
-					if($result->status == "success"){
+				$result = json_decode(wa_get_curl($server_url . "instance?instance_id=" . $instance_id . "&access_token=" . $access_token));
+				if (!empty($result)) {
+					if ($result->status == "success") {
 						$account = $this->model->get("*", $this->tb_account_manager, "token = '{$instance_id}' AND team_id = '{$team_id}'");
 						wa_ms([
 							"status" => "success",
 							"message" => __('Success'),
-							"submenu" => view("pages/sub/profile", [ 'result' => $result->data, 'account' => $account ], true),
+							"submenu" => view("pages/sub/profile", ['result' => $result->data, 'account' => $account], true),
 							"content" => view("pages/sub/empty", [], true)
-		 				]);
-					}else{
+						]);
+					} else {
 						wa_ms([
 							"status" => "error",
-							"relogin" => isset($result->relogin)?1:0,
+							"relogin" => isset($result->relogin) ? 1 : 0,
 							"message" => __($result->message)
-		 				]);
+						]);
 					}
-				}else{
+				} else {
 					wa_ms([
 						"status" => "error",
 						"message" => __("Cannot connect to server. Please try again later")
-	 				]);
+					]);
 				}
 				break;
 
 			case 'contact':
-				$result = json_decode( wa_get_curl( $server_url."get_contacts?instance_id=".$instance_id."&access_token=".$access_token ) );
-				if(!empty($result)){
-					if($result->status == "success"){
+				$result = json_decode(wa_get_curl($server_url . "get_contacts?instance_id=" . $instance_id . "&access_token=" . $access_token));
+				if (!empty($result)) {
+					if ($result->status == "success") {
 
 						wa_ms([
 							"status" => "success",
 							"message" => __('Success'),
-							"submenu" => view("pages/sub/contact", [ 'result' => $result->data ], true),
+							"submenu" => view("pages/sub/contact", ['result' => $result->data], true),
 							"content" => false,
-		 				]);
-					}else{
+						]);
+					} else {
 						wa_ms([
 							"status" => "error",
-							"relogin" => isset($result->relogin)?1:0,
+							"relogin" => isset($result->relogin) ? 1 : 0,
 							"message" => __($result->message)
-		 				]);
+						]);
 					}
-				}else{
+				} else {
 					wa_ms([
 						"status" => "error",
 						"message" => __("Cannot connect to server. Please try again later")
-	 				]);
+					]);
 				}
 				break;
 
@@ -180,9 +183,9 @@ class whatsapp extends MY_Controller {
 				wa_ms([
 					"status" => "success",
 					"message" => __('Success'),
-					"content" => view("pages/sub/contact_group", [ 'result' => $result ], true),
+					"content" => view("pages/sub/contact_group", ['result' => $result], true),
 					"submenu" => false,
- 				]);
+				]);
 				break;
 
 			case 'contact_group_list':
@@ -190,7 +193,7 @@ class whatsapp extends MY_Controller {
 					"status" => "success",
 					"content" => view("pages/sub/contact_group_list", [], true),
 					"submenu" => false,
- 				]);
+				]);
 				break;
 
 			case 'contact_group_import':
@@ -198,17 +201,17 @@ class whatsapp extends MY_Controller {
 					"status" => "success",
 					"content" => view("pages/sub/contact_group_import", [], true),
 					"submenu" => false,
- 				]);
+				]);
 				break;
 
 			case 'contact_group_update':
 				$groups = $this->model->fetch('*', $this->tb_whatsapp_contacts, "status = '1' AND team_id = '{$team_id}'");
-				$result = $this->model->get('*', $this->tb_whatsapp_contacts, "ids = '".segment(4)."' AND team_id = '{$team_id}'");
+				$result = $this->model->get('*', $this->tb_whatsapp_contacts, "ids = '" . segment(4) . "' AND team_id = '{$team_id}'");
 				wa_ms([
 					"status" => "success",
-					"content" => view("pages/sub/contact_group_update", [ 'groups' => $groups, 'result' => $result ], true),
+					"content" => view("pages/sub/contact_group_update", ['groups' => $groups, 'result' => $result], true),
 					"submenu" => false,
- 				]);
+				]);
 				break;
 
 			case 'contact_schedules':
@@ -216,9 +219,9 @@ class whatsapp extends MY_Controller {
 				wa_ms([
 					"status" => "success",
 					"message" => __('Success'),
-					"content" => view("pages/sub/contact_schedules", [ 'schedules' => $schedules ], true),
+					"content" => view("pages/sub/contact_schedules", ['schedules' => $schedules], true),
 					"submenu" => false,
- 				]);
+				]);
 				break;
 
 			case 'campaign_report':
@@ -229,57 +232,57 @@ class whatsapp extends MY_Controller {
 				wa_ms([
 					"status" => "success",
 					"message" => __('Success'),
-					"content" => view("pages/sub/campaign_report", [ 'schedules' => $schedules, 'account' => $account, 'report' => $report ], true),
+					"content" => view("pages/sub/campaign_report", ['schedules' => $schedules, 'account' => $account, 'report' => $report], true),
 					"submenu" => false,
- 				]);
+				]);
 				break;
 
 			case 'contact_create_campaign':
-				$item = $this->model->get("*", $this->tb_whatsapp_schedules, "ids = '".segment(4)."'");
+				$item = $this->model->get("*", $this->tb_whatsapp_schedules, "ids = '" . segment(4) . "'");
 				$buttons = $this->model->fetch("*", $this->tb_whatsapp_template, "team_id = '{$team_id}' AND cate = 2", "id", "DESC");
 				$list_message = $this->model->fetch("*", $this->tb_whatsapp_template, "team_id = '{$team_id}' AND cate = 1", "id", "DESC");
 				$groups = $this->model->fetch('*', $this->tb_whatsapp_contacts, " status = '1' AND team_id = '{$team_id}'");
 				$block_caption = Modules::run("whatsapp/block_caption");
 				$file_manager = Modules::run("file_manager/block_file", "single", "all", "upload_media");
-				Modules::run(get_class($this)."/block");
+				Modules::run(get_class($this) . "/block");
 				wa_ms([
 					"status" => "success",
 					"message" => __('Success'),
-					"content" => view("pages/sub/contact_create_campaign", [ 'file_manager' => $file_manager, 'block_caption' => $block_caption, 'groups' => $groups, "instance_id" => $instance_id, 'item' => $item, "buttons" => $buttons, "list_message" => $list_message ], true),
+					"content" => view("pages/sub/contact_create_campaign", ['file_manager' => $file_manager, 'block_caption' => $block_caption, 'groups' => $groups, "instance_id" => $instance_id, 'item' => $item, "buttons" => $buttons, "list_message" => $list_message], true),
 					"submenu" => false,
- 				]);
-	
+				]);
+
 				break;
 
 			case 'export_participants':
-				$result = json_decode( wa_get_curl( $server_url."get_groups?instance_id=".$instance_id."&access_token=".$access_token ) );
-				if(!empty($result)){
-					if($result->status == "success"){
+				$result = json_decode(wa_get_curl($server_url . "get_groups?instance_id=" . $instance_id . "&access_token=" . $access_token));
+				if (!empty($result)) {
+					if ($result->status == "success") {
 						wa_ms([
 							"status" => "success",
 							"message" => __('Success'),
-							"submenu" => view("pages/sub/group_chat", [ 'result' => $result->data ], true),
+							"submenu" => view("pages/sub/group_chat", ['result' => $result->data], true),
 							"content" => view("pages/sub/empty", [], true)
-		 				]);
-					}else{
+						]);
+					} else {
 						wa_ms([
 							"status" => "error",
-							"relogin" => isset($result->relogin)?1:0,
+							"relogin" => isset($result->relogin) ? 1 : 0,
 							"message" => __($result->message)
-		 				]);
+						]);
 					}
-				}else{
+				} else {
 					wa_ms([
 						"status" => "error",
 						"message" => __("Cannot connect to server. Please try again later")
-	 				]);
+					]);
 				}
 				break;
 
 			case 'download_participants':
-				$result = json_decode( wa_get_curl( $server_url."get_group_participants?group_id=".$chat_id."&instance_id=".$instance_id."&access_token=".$access_token ) );
-				if(!empty($result)){
-					if($result->status == "success"){
+				$result = json_decode(wa_get_curl($server_url . "get_group_participants?group_id=" . $chat_id . "&instance_id=" . $instance_id . "&access_token=" . $access_token));
+				if (!empty($result)) {
+					if ($result->status == "success") {
 						$participants = [];
 						foreach ($result->data as $value) {
 							$participants[] = [
@@ -290,18 +293,18 @@ class whatsapp extends MY_Controller {
 
 						download_send_headers("data_export_participants-" . date("Y-m-d") . ".csv");
 						echo array2csv($participants);
-					}else{
+					} else {
 						wa_ms([
 							"status" => "error",
-							"relogin" => isset($result->relogin)?1:0,
+							"relogin" => isset($result->relogin) ? 1 : 0,
 							"message" => __($result->message)
-		 				]);
+						]);
 					}
-				}else{
+				} else {
 					wa_ms([
 						"status" => "error",
 						"message" => __("Cannot connect to server. Please try again later")
-	 				]);
+					]);
 				}
 				break;
 
@@ -311,7 +314,7 @@ class whatsapp extends MY_Controller {
 					"message" => __('Success'),
 					"submenu" => view("pages/sub/template", [], true),
 					"content" => view("pages/sub/empty", [], true)
- 				]);
+				]);
 				break;
 
 			case 'template_list_message':
@@ -321,7 +324,7 @@ class whatsapp extends MY_Controller {
 					"message" => __('Success'),
 					"submenu" => false,
 					"content" => view("pages/sub/template_list_message", ['result' => $result], true)
- 				]);
+				]);
 				break;
 
 			case 'template_list_message_update':
@@ -329,13 +332,13 @@ class whatsapp extends MY_Controller {
 				$result = $this->model->get("*", $this->tb_whatsapp_template, "cate = 1 AND ids = '{$ids}' AND team_id = '{$team_id}'");
 				$block_caption = Modules::run("whatsapp/block_caption");
 				$file_manager = Modules::run("file_manager/block_file", "single", "all", "upload_media");
-				Modules::run(get_class($this)."/block");
+				Modules::run(get_class($this) . "/block");
 				wa_ms([
 					"status" => "success",
 					"message" => __('Success'),
 					"submenu" => false,
-					"content" => view("pages/sub/template_list_message_update", [ 'file_manager' => $file_manager, 'block_caption' => $block_caption, "result" => $result ], true)
- 				]);
+					"content" => view("pages/sub/template_list_message_update", ['file_manager' => $file_manager, 'block_caption' => $block_caption, "result" => $result], true)
+				]);
 				break;
 
 			case 'template_button_message':
@@ -344,8 +347,8 @@ class whatsapp extends MY_Controller {
 					"status" => "success",
 					"message" => __('Success'),
 					"submenu" => false,
-					"content" => view("pages/sub/template_button_message", [ "result" => $result ], true)
- 				]);
+					"content" => view("pages/sub/template_button_message", ["result" => $result], true)
+				]);
 				break;
 
 			case 'template_button_update':
@@ -353,76 +356,76 @@ class whatsapp extends MY_Controller {
 				$result = $this->model->get("*", $this->tb_whatsapp_template, "cate = 2 AND ids = '{$ids}' AND team_id = '{$team_id}'");
 				$block_caption = Modules::run("whatsapp/block_caption");
 				$file_manager = Modules::run("file_manager/block_file", "single", "all", "upload_media");
-				Modules::run(get_class($this)."/block");
+				Modules::run(get_class($this) . "/block");
 
 				wa_ms([
 					"status" => "success",
 					"message" => __('Success'),
 					"submenu" => false,
-					"content" => view("pages/sub/template_button_message_update", [ 'file_manager' => $file_manager, 'block_caption' => $block_caption, "result" => $result ], true)
- 				]);
+					"content" => view("pages/sub/template_button_message_update", ['file_manager' => $file_manager, 'block_caption' => $block_caption, "result" => $result], true)
+				]);
 				break;
 
 			case 'send_message':
 				switch (post("type")) {
 					case 2:
-						$result = json_decode( wa_post_curl( $server_url."send_message?type=media&chat_id=".$chat_id."&instance_id=".$instance_id."&access_token=".$access_token, [
+						$result = json_decode(wa_post_curl($server_url . "send_message?type=media&chat_id=" . $chat_id . "&instance_id=" . $instance_id . "&access_token=" . $access_token, [
 							"body" => $body,
 							"chat_id" => $chat_id,
 							"caption" => $caption,
 							"filename" => $filename
-						] ) );
+						]));
 
-						if(!empty($result)){
-							if($result->status == "success"){
+						if (!empty($result)) {
+							if ($result->status == "success") {
 								wa_ms([
 									"status" => "success",
 									"message" => __('Success'),
 									"message_id" => $result->data->key->id,
-									"content" => view("pages/sub/get_message", [ 'value' => $result->data ], true),
+									"content" => view("pages/sub/get_message", ['value' => $result->data], true),
 									"submenu" => false,
-				 				]);
-							}else{
+								]);
+							} else {
 								wa_ms([
 									"status" => "error",
-									"relogin" => isset($result->relogin)?1:0,
+									"relogin" => isset($result->relogin) ? 1 : 0,
 									"message" => __($result->message)
-				 				]);
+								]);
 							}
-						}else{
+						} else {
 							wa_ms([
 								"status" => "error",
 								"message" => __("Cannot connect to server. Please try again later")
-			 				]);
+							]);
 						}
 						break;
-					
+
 					default:
-						$result = json_decode( wa_post_curl( $server_url."send_message?type=chat&chat_id=".$chat_id."&instance_id=".$instance_id."&access_token=".$access_token, [
+						$result = json_decode(wa_post_curl($server_url . "send_message?type=chat&chat_id=" . $chat_id . "&instance_id=" . $instance_id . "&access_token=" . $access_token, [
 							"body" => $body,
 							"chat_id" => $chat_id
-						] ) );
-						if(!empty($result)){
-							if($result->status == "success"){
+						]));
+						if (!empty($result)) {
+							if ($result->status == "success") {
 								wa_ms([
 									"status" => "success",
 									"message" => __('Success'),
 									"message_id" => $result->data->key->id,
-									"content" => view("pages/sub/get_message", [ 'value' => $result->data ], true),
+									"content" => view("pages/sub/get_message", ['value' => $result->data], true),
 									"submenu" => false
-				 				]);
-							}else{
+								]);
+							} else {
 								wa_ms([
 									"status" => "error",
-									"relogin" => isset($result->relogin)?1:0,
+									"relogin" => isset($result->relogin) ? 1 : 0,
 									"message" => __($result->message)
-				 				]);
+								]);
 							}
-						}else{
+						} else {
 							wa_ms([
 								"status" => "error",
 								"message" => __("Cannot connect to server. Please try again later")
-			 				]);
+							]);
 						}
 						break;
 				}
@@ -434,33 +437,33 @@ class whatsapp extends MY_Controller {
 				$list_message = $this->model->fetch("*", $this->tb_whatsapp_template, "team_id = '{$team_id}' AND cate = 1", "id", "DESC");
 				$block_caption = Modules::run("whatsapp/block_caption");
 				$file_manager = Modules::run("file_manager/block_file", "single", "all", "upload_media");
-				Modules::run(get_class($this)."/block");
-				
+				Modules::run(get_class($this) . "/block");
+
 				wa_ms([
 					"status" => "success",
 					"message" => __('Success'),
-					"submenu" => view("pages/sub/autoresponder", [ 'file_manager' => $file_manager, 'block_caption' => $block_caption, "instance_id" => $instance_id, 'result' => $result, "buttons" => $buttons, "list_message" => $list_message ] , true),
-					"content" => view("pages/sub/autoresponder_preview", [ 'file_manager' => $file_manager, 'block_caption' => $block_caption, "instance_id" => $instance_id, 'result' => $result ], true),
- 				]);
+					"submenu" => view("pages/sub/autoresponder", ['file_manager' => $file_manager, 'block_caption' => $block_caption, "instance_id" => $instance_id, 'result' => $result, "buttons" => $buttons, "list_message" => $list_message], true),
+					"content" => view("pages/sub/autoresponder_preview", ['file_manager' => $file_manager, 'block_caption' => $block_caption, "instance_id" => $instance_id, 'result' => $result], true),
+				]);
 				break;
 
 			case 'search_contact':
-				$result = json_decode( wa_get_curl( $server_url."get_contacts?instance_id=".$instance_id."&access_token=".$access_token ) );
+				$result = json_decode(wa_get_curl($server_url . "get_contacts?instance_id=" . $instance_id . "&access_token=" . $access_token));
 				$data = [];
-				if(!empty($result)){
-					if($result->status == "success"){
-						if(!empty($result->data) && !empty($result->data)){
+				if (!empty($result)) {
+					if ($result->status == "success") {
+						if (!empty($result->data) && !empty($result->data)) {
 							foreach ($result->data as $value) {
-								if( isset($value->notify) ){
+								if (isset($value->notify)) {
 									$name = $value->notify;
-								}else if( isset($value->vname) ){
+								} else if (isset($value->vname)) {
 									$name = $value->vname;
-								}else{
+								} else {
 									$name = $value->jid;
 								}
 								$data[] = [
-									"id" => $value->jid."{|}".$name,
-	                    			"name" => $name
+									"id" => $value->jid . "{|}" . $name,
+									"name" => $name
 								];
 							}
 						}
@@ -476,7 +479,7 @@ class whatsapp extends MY_Controller {
 					"message" => __('Success'),
 					"submenu" => view("pages/sub/bulk", [], true),
 					"content" => view("pages/sub/empty", [], true)
- 				]);
+				]);
 				break;
 
 			case 'chatbot':
@@ -484,31 +487,119 @@ class whatsapp extends MY_Controller {
 				wa_ms([
 					"status" => "success",
 					"message" => __('Success'),
-					"submenu" => view("pages/sub/chatbot_list", [ 'result' => $result, 'instance_id' => $instance_id ], true),
+					"submenu" => view("pages/sub/chatbot_list", ['result' => $result, 'instance_id' => $instance_id], true),
 					"content" => view("pages/sub/empty", [], true)
- 				]);
+				]);
 				break;
 
 			case 'chatbot_update':
-				$result = $this->model->get("*", $this->tb_whatsapp_chatbot, "team_id = '{$team_id}' AND ids = '".segment(5)."'");
+				$result = $this->model->get("*", $this->tb_whatsapp_chatbot, "team_id = '{$team_id}' AND ids = '" . segment(5) . "'");
 				$buttons = $this->model->fetch("*", $this->tb_whatsapp_template, "team_id = '{$team_id}' AND cate = 2", "id", "DESC");
 				$list_message = $this->model->fetch("*", $this->tb_whatsapp_template, "team_id = '{$team_id}' AND cate = 1", "id", "DESC");
 				$block_caption = Modules::run("whatsapp/block_caption");
 				$file_manager = Modules::run("file_manager/block_file", "single", "all", "upload_media");
-				Modules::run(get_class($this)."/block");
+				Modules::run(get_class($this) . "/block");
 				wa_ms([
 					"status" => "success",
 					"message" => __('Success'),
-					"content" => view("pages/sub/chatbot_update", [ 'file_manager' => $file_manager, 'block_caption' => $block_caption, "instance_id" => $instance_id, 'result' => $result, "buttons" => $buttons, "list_message" => $list_message ], true),
+					"content" => view("pages/sub/chatbot_update", ['file_manager' => $file_manager, 'block_caption' => $block_caption, "instance_id" => $instance_id, 'result' => $result, "buttons" => $buttons, "list_message" => $list_message], true),
 					"submenu" => view("pages/sub/empty", [], true)
- 				]);
-	
+				]);
+
 				break;
 
+			case 'chatbot_import':
+				echo json_encode('chatbot_import'); exit;
+				$result = $this->model->get("*", $this->tb_whatsapp_chatbot, "team_id = '{$team_id}' AND ids = '" . segment(5) . "'");
+				$buttons = $this->model->fetch("*", $this->tb_whatsapp_template, "team_id = '{$team_id}' AND cate = 2", "id", "DESC");
+				$list_message = $this->model->fetch("*", $this->tb_whatsapp_template, "team_id = '{$team_id}' AND cate = 1", "id", "DESC");
+				$block_caption = Modules::run("whatsapp/block_caption");
+				$file_manager = Modules::run("file_manager/block_file", "single", "all", "upload_media");
+				Modules::run(get_class($this) . "/block");
+				wa_ms([
+					"status" => "success",
+					"message" => __('Success'),
+					"content" => view("pages/sub/chatbot_update", ['file_manager' => $file_manager, 'block_caption' => $block_caption, "instance_id" => $instance_id, 'result' => $result, "buttons" => $buttons, "list_message" => $list_message], true),
+					"submenu" => view("pages/sub/empty", [], true)
+				]);
+
+				break;
+
+			case 'chatbot_export':
+				$result = $this->model->fetch("*", $this->tb_whatsapp_chatbot, "team_id = '{$team_id}' AND instance_id = '{$instance_id}'");
+				wa_ms([
+					"status" => "success",
+					"message" => __('Success'),
+					"content" => view("pages/sub/chatbot_export", ['result' => $result, 'instance_id' => $instance_id], true),
+					"submenu" => view("pages/sub/empty", [], true)
+				]);
+				break;
+
+			case 'chatbot_export_action':
+				$result = json_decode(wa_get_curl($server_url . "get_group_participants?group_id=" . $chat_id . "&instance_id=" . $instance_id . "&access_token=" . $access_token));
+				if (!empty($result)) {
+					if ($result->status == "success") {
+						$participants = [];
+						foreach ($result->data as $value) {
+							$participants[] = [
+								'id' => $value->id,
+								'user' => wa_get_phone($value->id)
+							];
+						}
+
+						download_send_headers("data_export_participants-" . date("Y-m-d") . ".csv");
+						echo array2csv($participants);
+					} else {
+						wa_ms([
+							"status" => "error",
+							"relogin" => isset($result->relogin) ? 1 : 0,
+							"message" => __($result->message)
+						]);
+					}
+				} else {
+					wa_ms([
+						"status" => "error",
+						"message" => __("Cannot connect to server. Please try again later")
+					]);
+				}
+				break;
+
+			
+
+				case 'chatbot_duplicate':
+					echo json_encode('chatbot_duplicate'); exit;
+					$result = json_decode(wa_get_curl($server_url . "get_group_participants?group_id=" . $chat_id . "&instance_id=" . $instance_id . "&access_token=" . $access_token));
+					if (!empty($result)) {
+						if ($result->status == "success") {
+							$participants = [];
+							foreach ($result->data as $value) {
+								$participants[] = [
+									'id' => $value->id,
+									'user' => wa_get_phone($value->id)
+								];
+							}
+	
+							download_send_headers("data_export_participants-" . date("Y-m-d") . ".csv");
+							echo array2csv($participants);
+						} else {
+							wa_ms([
+								"status" => "error",
+								"relogin" => isset($result->relogin) ? 1 : 0,
+								"message" => __($result->message)
+							]);
+						}
+					} else {
+						wa_ms([
+							"status" => "error",
+							"message" => __("Cannot connect to server. Please try again later")
+						]);
+					}
+					break;
+
 			case 'logout':
-				$result = json_decode( wa_get_curl( $server_url."logout?instance_id=".$instance_id."&access_token=".$access_token ) );
-				if(!empty($result)){
-					if($result->status == "success"){
+				$result = json_decode(wa_get_curl($server_url . "logout?instance_id=" . $instance_id . "&access_token=" . $access_token));
+				if (!empty($result)) {
+					if ($result->status == "success") {
 
 						wa_ms([
 							"status" => "success",
@@ -516,19 +607,19 @@ class whatsapp extends MY_Controller {
 							"submenu" => view("pages/sub/start", [], true),
 							"content" => view("pages/sub/empty", [], true),
 							"logout" => true
-		 				]);
-					}else{
+						]);
+					} else {
 						wa_ms([
 							"status" => "error",
-							"relogin" => isset($result->relogin)?1:0,
+							"relogin" => isset($result->relogin) ? 1 : 0,
 							"message" => $result->message
-		 				]);
+						]);
 					}
-				}else{
+				} else {
 					wa_ms([
 						"status" => "error",
 						"message" => __("Cannot connect to server. Please try again later")
-	 				]);
+					]);
 				}
 				break;
 
@@ -538,7 +629,7 @@ class whatsapp extends MY_Controller {
 					"message" => __('Success'),
 					"submenu" => view("pages/sub/api_menu", [], true),
 					"content" => view("pages/sub/api_content", [], true)
- 				]);
+				]);
 				break;
 
 			case 'empty':
@@ -547,7 +638,7 @@ class whatsapp extends MY_Controller {
 					"message" => __('Success'),
 					"content" => view("pages/sub/empty", [], true),
 					"submenu" => view("pages/sub/start", [], true),
- 				]);
+				]);
 				break;
 
 			default:
@@ -556,20 +647,21 @@ class whatsapp extends MY_Controller {
 					"message" => __('Success'),
 					"content" => view("pages/sub/empty", [], true),
 					"submenu" => view("pages/sub/start", [], true),
- 				]);
+				]);
 				break;
 		}
 	}
 
 	public function block_caption()
 	{
-		return view($this->dir."pages/block_caption", [], true, $this);
+		return view($this->dir . "pages/block_caption", [], true, $this);
 	}
 
 	/*
 	* TEMPLATE
 	*/
-	public function template_list_message_save(){
+	public function template_list_message_save()
+	{
 		$name = post("name");
 		$title = post("title");
 		$caption = post("caption");
@@ -580,35 +672,35 @@ class whatsapp extends MY_Controller {
 		$team_id = _t("id");
 		$ids = segment(3);
 
-		if($caption==""){
+		if ($caption == "") {
 			wa_ms([
 				"status" => "error",
 				"message" => __('Caption is required')
 			]);
 		}
 
-		if($title==""){
+		if ($title == "") {
 			wa_ms([
 				"status" => "error",
 				"message" => __('Menu title is required')
 			]);
 		}
 
-		if($footer_desc==""){
+		if ($footer_desc == "") {
 			wa_ms([
 				"status" => "error",
 				"message" => __('Footer description is required')
 			]);
 		}
 
-		if($button_text==""){
+		if ($button_text == "") {
 			wa_ms([
 				"status" => "error",
 				"message" => __('Button text is required')
 			]);
 		}
 
-		if( empty($section_name) ){
+		if (empty($section_name)) {
 			wa_ms([
 				"status" => "error",
 				"message" => __('Add at least one section')
@@ -620,32 +712,32 @@ class whatsapp extends MY_Controller {
 
 		foreach ($section_name as $key => $section) {
 
-			$section_item = ['title' => $section, 'rows' => [] ];
+			$section_item = ['title' => $section, 'rows' => []];
 
-			if( !isset($section) || $section == "" ){
+			if (!isset($section) || $section == "") {
 				wa_ms([
 					"status" => "error",
-					"message" => sprintf( __("Section %s: Section name is required") , $key + 1 )
+					"message" => sprintf(__("Section %s: Section name is required"), $key + 1)
 				]);
 			}
 
-			if( !isset($options[$key]) || count($options[$key]) == 0 || !isset($options[$key]['name']) || !isset($options[$key]['desc'])){
+			if (!isset($options[$key]) || count($options[$key]) == 0 || !isset($options[$key]['name']) || !isset($options[$key]['desc'])) {
 				wa_ms([
 					"status" => "error",
-					"message" => sprintf( __("Section %s: Add at least one option") , $key + 1 )
+					"message" => sprintf(__("Section %s: Add at least one option"), $key + 1)
 				]);
 			}
 
-			if( count(  $options[$key]['name'] ) != count($options[$key]['desc']) ){
+			if (count($options[$key]['name']) != count($options[$key]['desc'])) {
 				wa_ms([
 					"status" => "error",
-					"message" => sprintf( __("Section %s: Invalid input data") , $key + 1 )
+					"message" => sprintf(__("Section %s: Invalid input data"), $key + 1)
 				]);
 			}
 
 			foreach ($options[$key]['name'] as $option_key => $option_value) {
 				$option_value = trim($option_value);
-				if($option_value == ""){
+				if ($option_value == "") {
 					wa_ms([
 						"status" => "error",
 						"message" => __('The option name is required')
@@ -671,7 +763,7 @@ class whatsapp extends MY_Controller {
 		];
 
 		$item = $this->model->get("*", $this->tb_whatsapp_template, "ids = '{$ids}' AND team_id = '{$team_id}'");
-		if( empty($item) ){
+		if (empty($item)) {
 			$data = [
 				"ids" => ids(),
 				"team_id" => $team_id,
@@ -682,16 +774,16 @@ class whatsapp extends MY_Controller {
 				"changed" => now(),
 				"created" => now(),
 			];
-			
-			$this->db->insert( $this->tb_whatsapp_template, $data );
-		}else{
+
+			$this->db->insert($this->tb_whatsapp_template, $data);
+		} else {
 			$data = [
 				"name" => $name,
 				"data" => json_encode($list_message),
 				"changed" => now(),
 			];
-			
-			$this->db->update( $this->tb_whatsapp_template, $data, ["ids" => $ids] );
+
+			$this->db->update($this->tb_whatsapp_template, $data, ["ids" => $ids]);
 		}
 
 		wa_ms([
@@ -700,23 +792,22 @@ class whatsapp extends MY_Controller {
 		]);
 	}
 
-	public function delete_list_template(){
+	public function delete_list_template()
+	{
 		$ids = post('id');
 
-		if( empty($ids) ){
+		if (empty($ids)) {
 			wa_ms([
 				"status" => "error",
 				"message" => __('Please select an item to delete')
 			]);
 		}
 
-		if( is_array($ids) ){
+		if (is_array($ids)) {
 			foreach ($ids as $id) {
 				$this->model->delete($this->tb_whatsapp_template, ['ids' => $id]);
 			}
-		}
-		elseif( is_string($ids) )
-		{
+		} elseif (is_string($ids)) {
 			$this->model->delete($this->tb_whatsapp_template, ['ids' => $ids]);
 		}
 
@@ -726,7 +817,8 @@ class whatsapp extends MY_Controller {
 		]);
 	}
 
-	public function template_button_message_save(){
+	public function template_button_message_save()
+	{
 		$name = post("name");
 		$main_desc = 0;
 		$footer_desc = post("footer_desc");
@@ -742,21 +834,21 @@ class whatsapp extends MY_Controller {
 		validate('null', __('Button template name'), $name);
 		validate('null', __('The type main description'), $main_desc);
 
-		if($caption==""){
+		if ($caption == "") {
 			wa_ms([
 				"status" => "error",
 				"message" => __('Caption is required for main description')
 			]);
 		}
 
-		if( empty($btn_msg_type) ){
+		if (empty($btn_msg_type)) {
 			wa_ms([
 				"status" => "error",
 				"message" => __('Add at least one button item')
 			]);
 		}
 
-		if(count($btn_msg_type) > 3){
+		if (count($btn_msg_type) > 3) {
 			wa_ms([
 				"status" => "error",
 				"message" => __('Only up to 3 button items allowed')
@@ -772,10 +864,10 @@ class whatsapp extends MY_Controller {
 
 			switch ($value) {
 				case 1:
-					if( !isset($btn_msg_display_text[$key]) || $btn_msg_display_text[$key] == "" ){
+					if (!isset($btn_msg_display_text[$key]) || $btn_msg_display_text[$key] == "") {
 						wa_ms([
 							"status" => "error",
-							"message" => sprintf( __("Button %s: Please enter display text") , $key + 1 )
+							"message" => sprintf(__("Button %s: Please enter display text"), $key + 1)
 						]);
 					}
 
@@ -789,17 +881,17 @@ class whatsapp extends MY_Controller {
 					break;
 
 				case 2:
-					if( !isset($btn_msg_display_text[$key]) || $btn_msg_display_text[$key] == "" ){
+					if (!isset($btn_msg_display_text[$key]) || $btn_msg_display_text[$key] == "") {
 						wa_ms([
 							"status" => "error",
-							"message" => sprintf( __("Button %s: Please enter display text"), $key + 1 )
+							"message" => sprintf(__("Button %s: Please enter display text"), $key + 1)
 						]);
 					}
 
 					if (!isset($btn_msg_link[$key]) || filter_var($btn_msg_link[$key], FILTER_VALIDATE_URL) === FALSE) {
-					    wa_ms([
+						wa_ms([
 							"status" => "error",
-							"message" => sprintf( __( "Button %s: Invalid URL"), $key + 1 )
+							"message" => sprintf(__("Button %s: Invalid URL"), $key + 1)
 						]);
 					}
 
@@ -813,24 +905,24 @@ class whatsapp extends MY_Controller {
 					break;
 
 				case 3:
-					if( !isset($btn_msg_display_text[$key]) || $btn_msg_display_text[$key] == "" ){
+					if (!isset($btn_msg_display_text[$key]) || $btn_msg_display_text[$key] == "") {
 						wa_ms([
 							"status" => "error",
-							"message" => sprintf( __( "Button %s: Please enter display text"), $key + 1 )
+							"message" => sprintf(__("Button %s: Please enter display text"), $key + 1)
 						]);
 					}
 
-					if ( !isset($btn_msg_call[$key]) || !isValidTelephoneNumber($btn_msg_call[$key]) ){
-					    wa_ms([
+					if (!isset($btn_msg_call[$key]) || !isValidTelephoneNumber($btn_msg_call[$key])) {
+						wa_ms([
 							"status" => "error",
-							"message" => sprintf( __( "Button %s: Invalid phone number") , $key + 1 )
+							"message" => sprintf(__("Button %s: Invalid phone number"), $key + 1)
 						]);
 					}
 
-					if ( $btn_msg_call[$key] == "" ){
-					    wa_ms([
+					if ($btn_msg_call[$key] == "") {
+						wa_ms([
 							"status" => "error",
-							"message" => sprintf( __( "Button %s: Phone number is required") , $key + 1 )
+							"message" => sprintf(__("Button %s: Phone number is required"), $key + 1)
 						]);
 					}
 
@@ -842,7 +934,7 @@ class whatsapp extends MY_Controller {
 						]
 					];
 					break;
-				
+
 				default:
 					wa_ms([
 						"status" => "error",
@@ -851,7 +943,7 @@ class whatsapp extends MY_Controller {
 					break;
 			}
 
-			if($value == ""){
+			if ($value == "") {
 				wa_ms([
 					"status" => "error",
 					"message" => __('The option name is required')
@@ -863,21 +955,21 @@ class whatsapp extends MY_Controller {
 			"templateButtons" => $item_button_message
 		];
 
-		if($footer_desc != ""){
+		if ($footer_desc != "") {
 			$btn_template["footer"] = $footer_desc;
 		}
 
-		if(!empty($media)){
+		if (!empty($media)) {
 			$btn_template["caption"] = $caption;
 			$btn_template["image"] = [
 				"url" =>  $media[0]
 			];
-		}else{
+		} else {
 			$btn_template["text"] = $caption;
 		}
 
 		$item = $this->model->get("*", $this->tb_whatsapp_template, "ids = '{$ids}' AND team_id = '{$team_id}'");
-		if( empty($item) ){
+		if (empty($item)) {
 			$data = [
 				"ids" => ids(),
 				"team_id" => $team_id,
@@ -888,16 +980,16 @@ class whatsapp extends MY_Controller {
 				"changed" => now(),
 				"created" => now(),
 			];
-			
-			$this->db->insert( $this->tb_whatsapp_template, $data );
-		}else{
+
+			$this->db->insert($this->tb_whatsapp_template, $data);
+		} else {
 			$data = [
 				"name" => $name,
 				"data" => json_encode($btn_template),
 				"changed" => now(),
 			];
-			
-			$this->db->update( $this->tb_whatsapp_template, $data, ["ids" => $ids] );
+
+			$this->db->update($this->tb_whatsapp_template, $data, ["ids" => $ids]);
 		}
 
 		wa_ms([
@@ -909,7 +1001,8 @@ class whatsapp extends MY_Controller {
 	/*
 	* AUTORESPONDER
 	*/
-	public function autoresponder_save(){
+	public function autoresponder_save()
+	{
 		$team_id = _t("id");
 		$status = (int)post('status');
 		$medias = post("media");
@@ -927,7 +1020,7 @@ class whatsapp extends MY_Controller {
 
 		$account = $this->model->get("*", $this->tb_account_manager, "token = '{$instance_id}' AND team_id = '{$team_id}'");
 
-		if(empty($account)){
+		if (empty($account)) {
 			wa_ms([
 				"status" => "error",
 				"message" => __('Profile does not exist')
@@ -936,20 +1029,20 @@ class whatsapp extends MY_Controller {
 
 		switch ($cate) {
 			case 1:
-				if( _p("whatsapp_chatbot_media") ){
-					if(!is_array($medias) && $caption == ""){
+				if (_p("whatsapp_chatbot_media")) {
+					if (!is_array($medias) && $caption == "") {
 						wa_ms([
 							"status" => "error",
 							"message" => __('Please enter a caption or add a media')
 						]);
 					}
-				}else{
+				} else {
 					validate('null', __('Caption'), $caption);
 				}
 				break;
 
 			case 2:
-				if($btn_msg == 0){
+				if ($btn_msg == 0) {
 					wa_ms([
 						"status" => "error",
 						"message" => __('Please select a button message option')
@@ -959,7 +1052,7 @@ class whatsapp extends MY_Controller {
 				break;
 
 			case 3:
-				if($list_msg == 0){
+				if ($list_msg == 0) {
 					wa_ms([
 						"status" => "error",
 						"message" => __('Please select a list message option')
@@ -968,9 +1061,9 @@ class whatsapp extends MY_Controller {
 
 				$template = $list_msg;
 				break;
-			
+
 			default:
-				if($btn_msg == 0){
+				if ($btn_msg == 0) {
 					wa_ms([
 						"status" => "error",
 						"message" => __('Invalid input data')
@@ -979,25 +1072,25 @@ class whatsapp extends MY_Controller {
 				break;
 		}
 
-		if((int)_p("whatsapp_autoresponder_delay") > (int)$delay){
+		if ((int)_p("whatsapp_autoresponder_delay") > (int)$delay) {
 			wa_ms([
 				"status" => "error",
-				"message" => sprintf( __('You can only set autoresponder delays greater than %s minutes'), (int)_p("whatsapp_autoresponder_delay") )
+				"message" => sprintf(__('You can only set autoresponder delays greater than %s minutes'), (int)_p("whatsapp_autoresponder_delay"))
 			]);
 		}
 
 		$item = $this->model->get("*", $this->tb_whatsapp_autoresponder, "ids = '{$account->ids}' AND team_id = '{$team_id}'");
 
-		if(!$item ){
-			$this->model->insert($this->tb_whatsapp_autoresponder , [
+		if (!$item) {
+			$this->model->insert($this->tb_whatsapp_autoresponder, [
 				"team_id" => $team_id,
 				"ids" => $account->ids,
 				"cate" => $cate,
 				"template" => $template,
 				"instance_id" => $account->token,
 				"data" => $caption,
-				"media" => empty($medias)?"[]":json_encode($medias),
-				"except" => empty($except)?"[]":json_encode($except),
+				"media" => empty($medias) ? "[]" : json_encode($medias),
+				"except" => empty($except) ? "[]" : json_encode($except),
 				"path" => FCPATH,
 				"delay" => $delay,
 				"send_to" => $send_to,
@@ -1005,23 +1098,23 @@ class whatsapp extends MY_Controller {
 				"changed" => now(),
 				"created" => now()
 			]);
-		}else{
+		} else {
 			$this->model->update(
-				$this->tb_whatsapp_autoresponder, 
+				$this->tb_whatsapp_autoresponder,
 				[
 					"team_id" => $team_id,
 					"cate" => $cate,
 					"template" => $template,
 					"instance_id" => $account->token,
 					"data" => $caption,
-					"media" => empty($medias)?"[]":json_encode($medias),
-					"except" => empty($except)?"[]":json_encode($except),
+					"media" => empty($medias) ? "[]" : json_encode($medias),
+					"except" => empty($except) ? "[]" : json_encode($except),
 					"path" => FCPATH,
 					"delay" => $delay,
 					"send_to" => $send_to,
 					"status" => $status,
 					"changed" => now()
-				], 
+				],
 				array("ids" => $account->ids)
 			);
 		}
@@ -1032,23 +1125,22 @@ class whatsapp extends MY_Controller {
 		]);
 	}
 
-	public function chatbot_delete(){
+	public function chatbot_delete()
+	{
 		$ids = post('id');
 
-		if( empty($ids) ){
+		if (empty($ids)) {
 			wa_ms([
 				"status" => "error",
 				"message" => __('Please select an item to delete')
 			]);
 		}
 
-		if( is_array($ids) ){
+		if (is_array($ids)) {
 			foreach ($ids as $id) {
 				$this->model->delete($this->tb_whatsapp_chatbot, ['ids' => $id]);
 			}
-		}
-		elseif( is_string($ids) )
-		{
+		} elseif (is_string($ids)) {
 			$this->model->delete($this->tb_whatsapp_chatbot, ['ids' => $ids]);
 		}
 
@@ -1068,21 +1160,21 @@ class whatsapp extends MY_Controller {
 		$team_id = _t("id");
 
 		$item = $this->model->get("*", $this->tb_whatsapp_contacts, "ids = '{$ids}'");
-		if(!$item){
+		if (!$item) {
 			$total_contact_group = $this->model->get("count(id) as count", $this->tb_whatsapp_contacts, "team_id = '{$team_id}'");
 			$max_contact_group = (int)_p('whatsapp_bulk_max_contact_group');
 
-			if($max_contact_group <= $total_contact_group->count){
+			if ($max_contact_group <= $total_contact_group->count) {
 				wa_ms([
 					"status" => "error",
-					"message" => sprintf( __( 'You can only create a maximum of %s contact groups' ), $max_contact_group )
+					"message" => sprintf(__('You can only create a maximum of %s contact groups'), $max_contact_group)
 				]);
 			}
 
 			$item = $this->model->get("*", $this->tb_whatsapp_contacts, "name = '{$name}'");
 			validate('null', __('Group contact name'), $name);
 
-			$this->model->insert($this->tb_whatsapp_contacts , [
+			$this->model->insert($this->tb_whatsapp_contacts, [
 				"ids" => ids(),
 				"team_id" => $team_id,
 				"name" => $name,
@@ -1090,19 +1182,19 @@ class whatsapp extends MY_Controller {
 				"changed" => now(),
 				"created" => now()
 			]);
-		}else{
+		} else {
 			$item = $this->model->get("*", $this->tb_whatsapp_contacts, "ids != '{$ids}' AND name = '{$name}'");
 			validate('null', __('Group contact name'), $name);
 			validate('not_empty', __('This group contact name already exists'), $item);
 
 			$this->model->update(
-				$this->tb_whatsapp_contacts, 
+				$this->tb_whatsapp_contacts,
 				[
 					"team_id" => $team_id,
 					"name" => $name,
 					"status" => $status,
 					"changed" => now()
-				], 
+				],
 				array("ids" => $ids)
 			);
 		}
@@ -1111,21 +1203,21 @@ class whatsapp extends MY_Controller {
 			"status" => "success",
 			"message" => __('Success')
 		]);
-
 	}
 
-	public function download_example_upload_csv(){
+	public function download_example_upload_csv()
+	{
 
 		$module_path = get_module_directory(__DIR__);
-		$filename = $module_path.'assets/csv_template.csv';
-		if(file_exists($filename)) {
+		$filename = $module_path . 'assets/csv_template.csv';
+		if (file_exists($filename)) {
 
 			//Define header information
 			header('Content-Description: File Transfer');
 			header('Content-Type: application/octet-stream');
 			header("Cache-Control: no-cache, must-revalidate");
 			header("Expires: 0");
-			header('Content-Disposition: attachment; filename="'.basename($filename).'"');
+			header('Content-Disposition: attachment; filename="' . basename($filename) . '"');
 			header('Content-Length: ' . filesize($filename));
 			header('Pragma: public');
 
@@ -1137,34 +1229,33 @@ class whatsapp extends MY_Controller {
 
 			//Terminate from the script
 			die();
-		}else{
+		} else {
 			echo "File does not exist.";
 		}
 	}
-	
-	public function delete_contact_group(){
+
+	public function delete_contact_group()
+	{
 		$ids = post('id');
 
-		if( empty($ids) ){
+		if (empty($ids)) {
 			wa_ms([
 				"status" => "error",
 				"message" => __('Please select an item to delete')
 			]);
 		}
 
-		if( is_array($ids) ){
+		if (is_array($ids)) {
 			foreach ($ids as $id) {
 				$item = $this->model->get("*", $this->tb_whatsapp_contacts, "ids = '{$id}'");
-				if(!empty($item)){
+				if (!empty($item)) {
 					$this->model->delete($this->tb_whatsapp_contacts, ['ids' => $id]);
 					$this->model->delete($this->tb_whatsapp_phone_numbers, ['pid' => $item->id]);
 				}
 			}
-		}
-		elseif( is_string($ids) )
-		{
+		} elseif (is_string($ids)) {
 			$item = $this->model->get("*", $this->tb_whatsapp_contacts, "ids = '{$ids}'");
-			if(!empty($item)){
+			if (!empty($item)) {
 				$this->model->delete($this->tb_whatsapp_contacts, ['ids' => $ids]);
 				$this->model->delete($this->tb_whatsapp_phone_numbers, ['pid' => $item->id]);
 			}
@@ -1176,10 +1267,11 @@ class whatsapp extends MY_Controller {
 		]);
 	}
 
-	public function ajax_load_contact_group($ids = ""){
+	public function ajax_load_contact_group($ids = "")
+	{
 		$team_id = _t("id");
 		$numbers = $this->model->get("*", $this->tb_whatsapp_contacts, "ids = '{$ids}' AND team_id = '{$team_id}'");
-		if( !$numbers ) return false;
+		if (!$numbers) return false;
 
 		$page = (int)post("page");
 
@@ -1191,23 +1283,22 @@ class whatsapp extends MY_Controller {
 		view("pages/sub/ajax_load_phone_numbers", $data, false);
 	}
 
-	public function delete_phone(){
+	public function delete_phone()
+	{
 		$ids = post('id');
 
-		if( empty($ids) ){
+		if (empty($ids)) {
 			wa_ms([
 				"status" => "error",
 				"message" => __('Please select an item to delete')
 			]);
 		}
 
-		if( is_array($ids) ){
+		if (is_array($ids)) {
 			foreach ($ids as $id) {
 				$this->model->delete($this->tb_whatsapp_phone_numbers, ['ids' => $id]);
 			}
-		}
-		elseif( is_string($ids) )
-		{
+		} elseif (is_string($ids)) {
 			$this->model->delete($this->tb_whatsapp_phone_numbers, ['ids' => $ids]);
 		}
 
@@ -1217,7 +1308,8 @@ class whatsapp extends MY_Controller {
 		]);
 	}
 
-	public function ajax_add_phone($ids = ""){
+	public function ajax_add_phone($ids = "")
+	{
 		$team_id = _t("id");
 		$phone_numbers = post("phone_numbers");
 		validate('null', __('Phone numbers'), $phone_numbers);
@@ -1225,14 +1317,14 @@ class whatsapp extends MY_Controller {
 
 		$item = $this->model->get("*", $this->tb_whatsapp_contacts, "ids = '{$ids}'");
 
-		if(!empty($item)){
+		if (!empty($item)) {
 			$total_phone_numbers = $this->model->get("count(id) as count", $this->tb_whatsapp_phone_numbers, "team_id = '{$team_id}' AND pid = '{$item->id}'");
 			$max_phone_number = (int)_p('whatsapp_bulk_max_phone_numbers');
 
-			if($max_phone_number < $total_phone_numbers->count + count($phone_numbers)){
+			if ($max_phone_number < $total_phone_numbers->count + count($phone_numbers)) {
 				wa_ms([
 					"status" => "error",
-					"message" => sprintf( __( 'You can only add up to %s phone numbers per contact group' ), $max_phone_number )
+					"message" => sprintf(__('You can only add up to %s phone numbers per contact group'), $max_phone_number)
 				]);
 			}
 
@@ -1244,16 +1336,16 @@ class whatsapp extends MY_Controller {
 				$phone_number = str_replace("\"", "", $phone_number);
 				$phone_number = trim($phone_number);
 
-				if(is_numeric($phone_number) || stripos($phone_number, "@g.us") !== false){
+				if (is_numeric($phone_number) || stripos($phone_number, "@g.us") !== false) {
 
 					//$check = $this->model->get("*", $this->tb_whatsapp_phone_numbers, "pid = '{$item->id}' AND phone = '{$phone_number}'");
 					//if(empty($check)){
-						$this->model->insert($this->tb_whatsapp_phone_numbers , [
-							"ids" => ids(),
-							"team_id" => $item->team_id,
-							"pid" => $item->id,
-							"phone" => $phone_number,
-						]);
+					$this->model->insert($this->tb_whatsapp_phone_numbers, [
+						"ids" => ids(),
+						"team_id" => $item->team_id,
+						"pid" => $item->id,
+						"phone" => $phone_number,
+					]);
 					//}
 
 				}
@@ -1266,94 +1358,92 @@ class whatsapp extends MY_Controller {
 		]);
 	}
 
-	public function do_import_contact($ids= ""){
+	public function do_import_contact($ids = "")
+	{
 		$team_id = _t("id");
 		$config['upload_path']          = TMP_PATH;
-        $config['allowed_types']        = 'csv';
-        $config['encrypt_name']         = FALSE;
+		$config['allowed_types']        = 'csv';
+		$config['encrypt_name']         = FALSE;
 
-        $this->load->library('upload', $config);
+		$this->load->library('upload', $config);
 
-        $item = $this->model->get("*", $this->tb_whatsapp_contacts, "ids = '{$ids}'");
-        if(!empty($item)){
-	        if(!empty($_FILES)){
-		        $files = $_FILES;
-			    for($i=0; $i< count($_FILES['files']['name']); $i++){  
-			        $_FILES['files']['name']= $files['files']['name'][$i];
-			        $_FILES['files']['type']= $files['files']['type'][$i];
-			        $_FILES['files']['tmp_name']= $files['files']['tmp_name'][$i];
-			        $_FILES['files']['error']= $files['files']['error'][$i];
-			        $_FILES['files']['size']= $files['files']['size'][$i];
-			        
-			        $this->upload->initialize($config);
+		$item = $this->model->get("*", $this->tb_whatsapp_contacts, "ids = '{$ids}'");
+		if (!empty($item)) {
+			if (!empty($_FILES)) {
+				$files = $_FILES;
+				for ($i = 0; $i < count($_FILES['files']['name']); $i++) {
+					$_FILES['files']['name'] = $files['files']['name'][$i];
+					$_FILES['files']['type'] = $files['files']['type'][$i];
+					$_FILES['files']['tmp_name'] = $files['files']['tmp_name'][$i];
+					$_FILES['files']['error'] = $files['files']['error'][$i];
+					$_FILES['files']['size'] = $files['files']['size'][$i];
 
-			        if (!$this->upload->do_upload("files"))
-			        {
-		                ms([
-		                	"status"  => "error",
-		                	"message" => $this->upload->display_errors()
-		                ]);
-			        }
-			        else
-			        {
-			        	$info = (object)$this->upload->data();
+					$this->upload->initialize($config);
 
-			        	$inputFileName = $info->full_path;
-			        	
-			        	try {
-			        		$csvFile = new Keboola\Csv\CsvReader($inputFileName);
-			        	} catch (Exception $e) {
-			        		ms([
-			                	"status"  => "error",
-			                	"message" => $e->getMessage()
-			                ]);
-			        	}
+					if (!$this->upload->do_upload("files")) {
+						ms([
+							"status"  => "error",
+							"message" => $this->upload->display_errors()
+						]);
+					} else {
+						$info = (object)$this->upload->data();
 
-			        	$count_phone_numbers = 0;
-			        	foreach($csvFile as $phone_number) {
-			        		$count_phone_numbers++;
-			        	}
+						$inputFileName = $info->full_path;
 
-			        	$total_phone_numbers = $this->model->get("count(id) as count", $this->tb_whatsapp_phone_numbers, "team_id = '{$team_id}' AND pid = '{$item->id}'");
+						try {
+							$csvFile = new Keboola\Csv\CsvReader($inputFileName);
+						} catch (Exception $e) {
+							ms([
+								"status"  => "error",
+								"message" => $e->getMessage()
+							]);
+						}
+
+						$count_phone_numbers = 0;
+						foreach ($csvFile as $phone_number) {
+							$count_phone_numbers++;
+						}
+
+						$total_phone_numbers = $this->model->get("count(id) as count", $this->tb_whatsapp_phone_numbers, "team_id = '{$team_id}' AND pid = '{$item->id}'");
 						$max_phone_number = (int)_p('whatsapp_bulk_max_phone_numbers');
 
-						if($max_phone_number < $total_phone_numbers->count + $count_phone_numbers){
+						if ($max_phone_number < $total_phone_numbers->count + $count_phone_numbers) {
 							wa_ms([
 								"status" => "error",
-								"message" => sprintf( __( 'You can only add up to %s phone numbers per contact group' ), $max_phone_number )
+								"message" => sprintf(__('You can only add up to %s phone numbers per contact group'), $max_phone_number)
 							]);
 						}
 
 						$headers = [];
-						foreach($csvFile as $key => $row) {
-							if( $key != 0 ){
-								if(is_array($row )){
+						foreach ($csvFile as $key => $row) {
+							if ($key != 0) {
+								if (is_array($row)) {
 									$phone_number = $row[0];
 								}
-								
+
 								$phone_number = str_replace("+", "", $phone_number);
 								$phone_number = str_replace(" ", "", $phone_number);
 								$phone_number = str_replace("'", "", $phone_number);
 								$phone_number = str_replace("`", "", $phone_number);
 								$phone_number = str_replace("\"", "", $phone_number);
 								$phone_number = trim($phone_number);
-                                
-                                $params = NULL;
-								if(is_numeric($phone_number) || stripos($phone_number, "@g.us") !== false){
-									if(count($row) > 0){
-										
+
+								$params = NULL;
+								if (is_numeric($phone_number) || stripos($phone_number, "@g.us") !== false) {
+									if (count($row) > 0) {
+
 										$params = [];
 										foreach ($row as $param_key => $value) {
-											if($param_key != 0 ){
-												if($value != ""){
-													$params[ $headers[$param_key-1] ] = $value;
+											if ($param_key != 0) {
+												if ($value != "") {
+													$params[$headers[$param_key - 1]] = $value;
 												}
 											}
 										}
 									}
 
 									$item = $this->model->get("*", $this->tb_whatsapp_contacts, "ids = '{$ids}'");
-									$this->model->insert($this->tb_whatsapp_phone_numbers , [
+									$this->model->insert($this->tb_whatsapp_phone_numbers, [
 										"ids" => ids(),
 										"team_id" => $item->team_id,
 										"pid" => $item->id,
@@ -1361,10 +1451,10 @@ class whatsapp extends MY_Controller {
 										"params" => json_encode($params),
 									]);
 								}
-							}else{
-								if(!empty($row)){
+							} else {
+								if (!empty($row)) {
 									foreach ($row as $pos => $value) {
-										if($pos != 0){
+										if ($pos != 0) {
 											$headers[] = $value;
 										}
 									}
@@ -1376,17 +1466,133 @@ class whatsapp extends MY_Controller {
 							"status" => "success",
 							"message" => __('Success')
 						]);
-			        }
-			    }
-	        }else{
-	        	load_404();
-	        }
-        }
-        
+					}
+				}
+			} else {
+				load_404();
+			}
+		}
+	}
+
+	public function do_import_chatbot($ids = "")
+	{
+		$team_id = _t("id");
+		$config['upload_path']          = TMP_PATH;
+		$config['allowed_types']        = 'csv';
+		$config['encrypt_name']         = FALSE;
+
+		$this->load->library('upload', $config);
+
+		$item = $this->model->get("*", $this->tb_whatsapp_contacts, "ids = '{$ids}'");
+		if (!empty($item)) {
+			if (!empty($_FILES)) {
+				$files = $_FILES;
+				for ($i = 0; $i < count($_FILES['files']['name']); $i++) {
+					$_FILES['files']['name'] = $files['files']['name'][$i];
+					$_FILES['files']['type'] = $files['files']['type'][$i];
+					$_FILES['files']['tmp_name'] = $files['files']['tmp_name'][$i];
+					$_FILES['files']['error'] = $files['files']['error'][$i];
+					$_FILES['files']['size'] = $files['files']['size'][$i];
+
+					$this->upload->initialize($config);
+
+					if (!$this->upload->do_upload("files")) {
+						ms([
+							"status"  => "error",
+							"message" => $this->upload->display_errors()
+						]);
+					} else {
+						$info = (object)$this->upload->data();
+
+						$inputFileName = $info->full_path;
+
+						try {
+							$csvFile = new Keboola\Csv\CsvReader($inputFileName);
+						} catch (Exception $e) {
+							ms([
+								"status"  => "error",
+								"message" => $e->getMessage()
+							]);
+						}
+
+						$count_phone_numbers = 0;
+						foreach ($csvFile as $phone_number) {
+							$count_phone_numbers++;
+						}
+
+						$total_phone_numbers = $this->model->get("count(id) as count", $this->tb_whatsapp_phone_numbers, "team_id = '{$team_id}' AND pid = '{$item->id}'");
+						$max_phone_number = (int)_p('whatsapp_bulk_max_phone_numbers');
+
+						if ($max_phone_number < $total_phone_numbers->count + $count_phone_numbers) {
+							wa_ms([
+								"status" => "error",
+								"message" => sprintf(__('You can only add up to %s phone numbers per contact group'), $max_phone_number)
+							]);
+						}
+
+						$headers = [];
+						foreach ($csvFile as $key => $row) {
+							if ($key != 0) {
+								if (is_array($row)) {
+									$phone_number = $row[0];
+								}
+
+								$phone_number = str_replace("+", "", $phone_number);
+								$phone_number = str_replace(" ", "", $phone_number);
+								$phone_number = str_replace("'", "", $phone_number);
+								$phone_number = str_replace("`", "", $phone_number);
+								$phone_number = str_replace("\"", "", $phone_number);
+								$phone_number = trim($phone_number);
+
+								$params = NULL;
+								if (is_numeric($phone_number) || stripos($phone_number, "@g.us") !== false) {
+									if (count($row) > 0) {
+
+										$params = [];
+										foreach ($row as $param_key => $value) {
+											if ($param_key != 0) {
+												if ($value != "") {
+													$params[$headers[$param_key - 1]] = $value;
+												}
+											}
+										}
+									}
+
+									$item = $this->model->get("*", $this->tb_whatsapp_contacts, "ids = '{$ids}'");
+									$this->model->insert($this->tb_whatsapp_phone_numbers, [
+										"ids" => ids(),
+										"team_id" => $item->team_id,
+										"pid" => $item->id,
+										"phone" => $phone_number,
+										"params" => json_encode($params),
+									]);
+								}
+							} else {
+								if (!empty($row)) {
+									foreach ($row as $pos => $value) {
+										if ($pos != 0) {
+											$headers[] = $value;
+										}
+									}
+								}
+							}
+						}
+
+						wa_ms([
+							"status" => "success",
+							"message" => __('Success')
+						]);
+					}
+				}
+			} else {
+				load_404();
+			}
+		}
 	}
 
 	/*BULK*/
-	public function bulk_save(){
+	public function bulk_save()
+	{
 		$team_id = _t("id");
 		$ids = post("ids");
 		$account = post("account");
@@ -1396,7 +1602,7 @@ class whatsapp extends MY_Controller {
 		$template = 0;
 		$btn_msg = (int)post("btn_msg");
 		$list_msg = (int)post("list_msg");
-		$caption = post("caption");  
+		$caption = post("caption");
 		$medias = post("media");
 		$instance_id = post("instance_id");
 		$time_post = timestamp_sql(post("time_post"));
@@ -1412,20 +1618,20 @@ class whatsapp extends MY_Controller {
 
 		switch ($cate) {
 			case 1:
-				if( _p("whatsapp_bulk_media") ){
-					if(!is_array($medias) && $caption == ""){
+				if (_p("whatsapp_bulk_media")) {
+					if (!is_array($medias) && $caption == "") {
 						wa_ms([
 							"status" => "error",
 							"message" => __('Please enter a caption or add a media')
 						]);
 					}
-				}else{
+				} else {
 					validate('null', __('Caption'), $caption);
 				}
 				break;
 
 			case 2:
-				if($btn_msg == 0){
+				if ($btn_msg == 0) {
 					wa_ms([
 						"status" => "error",
 						"message" => __('Please select a button message option')
@@ -1435,7 +1641,7 @@ class whatsapp extends MY_Controller {
 				break;
 
 			case 3:
-				if($list_msg == 0){
+				if ($list_msg == 0) {
 					wa_ms([
 						"status" => "error",
 						"message" => __('Please select a list message option')
@@ -1444,9 +1650,9 @@ class whatsapp extends MY_Controller {
 
 				$template = $list_msg;
 				break;
-			
+
 			default:
-				if($btn_msg == 0){
+				if ($btn_msg == 0) {
 					wa_ms([
 						"status" => "error",
 						"message" => __('Invalid input data')
@@ -1458,14 +1664,14 @@ class whatsapp extends MY_Controller {
 		validate("min_number", __("Min interval"), $min_interval_per_post, 5);
 		validate("min_number", __("Max interval"), $max_interval_per_post, 5);
 
-		if($min_interval_per_post > $max_interval_per_post){
+		if ($min_interval_per_post > $max_interval_per_post) {
 			wa_ms([
 				"status" => "error",
 				"message" => __('Max interval must be greater than or equal to min interval')
 			]);
 		}
 
-		if(empty($item)){
+		if (empty($item)) {
 			validate('null', __('Time post'), $time_post);
 		}
 
@@ -1475,14 +1681,14 @@ class whatsapp extends MY_Controller {
 		validate('empty', __('Please select at least a profile'), $account);
 		validate('empty', __('Please select a contact group'), $group);
 
-		if( $account->status == 0 ){
+		if ($account->status == 0) {
 			wa_ms([
 				"status" => "error",
 				"message" => __("Relogin is required")
 			]);
 		}
 
-		if(!empty($item)){
+		if (!empty($item)) {
 			$data = [
 				"team_id" => $team_id,
 				"cate" => $cate,
@@ -1494,13 +1700,13 @@ class whatsapp extends MY_Controller {
 				"max_delay" => $max_interval_per_post,
 				"name" => $name,
 				"data" => $caption,
-				"media" => empty($medias)?"[]":json_encode($medias),
+				"media" => empty($medias) ? "[]" : json_encode($medias),
 				"path" => FCPATH,
 				"changed" => now()
 			];
 
-			$result = $this->db->update( $this->tb_whatsapp_schedules, $data, ["id" => $item->id]);
-		}else{
+			$result = $this->db->update($this->tb_whatsapp_schedules, $data, ["id" => $item->id]);
+		} else {
 			$data = [
 				"ids" => ids(),
 				"team_id" => $team_id,
@@ -1513,14 +1719,14 @@ class whatsapp extends MY_Controller {
 				"max_delay" => $max_interval_per_post,
 				"name" => $name,
 				"data" => $caption,
-				"media" => empty($medias)?"[]":json_encode($medias),
+				"media" => empty($medias) ? "[]" : json_encode($medias),
 				"path" => FCPATH,
 				"status" => 1,
 				"changed" => now(),
 				"created" => now()
 			];
 
-			$result = $this->db->insert( $this->tb_whatsapp_schedules, $data);
+			$result = $this->db->insert($this->tb_whatsapp_schedules, $data);
 		}
 
 		wa_ms([
@@ -1529,23 +1735,22 @@ class whatsapp extends MY_Controller {
 		]);
 	}
 
-	public function bulk_delete(){
+	public function bulk_delete()
+	{
 		$ids = post('id');
 
-		if( empty($ids) ){
+		if (empty($ids)) {
 			wa_ms([
 				"status" => "error",
 				"message" => __('Please select an item to delete')
 			]);
 		}
 
-		if( is_array($ids) ){
+		if (is_array($ids)) {
 			foreach ($ids as $id) {
 				$this->model->delete($this->tb_whatsapp_schedules, ['ids' => $id]);
 			}
-		}
-		elseif( is_string($ids) )
-		{
+		} elseif (is_string($ids)) {
 			$this->model->delete($this->tb_whatsapp_schedules, ['ids' => $ids]);
 		}
 
@@ -1555,25 +1760,26 @@ class whatsapp extends MY_Controller {
 		]);
 	}
 
-	public function bulk_schedule_action($ids, $status = ""){
+	public function bulk_schedule_action($ids, $status = "")
+	{
 		$status = (int)$status;
 
 		$item = $this->model->get("*", $this->tb_whatsapp_schedules, "ids = '{$ids}'");
-		if(!empty($item)){
+		if (!empty($item)) {
 			switch ($status) {
 				case 0:
 					$status = ['status' => 0, 'running' => 0];
-					$result = '<a href="'.get_module_url("bulk_schedule_action/".$ids."/1").'" class="btn-wa-schedule-action btn-play text-info"><i class="ri-play-fill" title="'.__("Play").'"></i></a>';
+					$result = '<a href="' . get_module_url("bulk_schedule_action/" . $ids . "/1") . '" class="btn-wa-schedule-action btn-play text-info"><i class="ri-play-fill" title="' . __("Play") . '"></i></a>';
 					break;
 
 				case 1:
 					$status = ['status' => 1, 'running' => 0];
-					$result = '<a href="'.get_module_url("bulk_schedule_action/".$ids."/0").'" class="btn-wa-schedule-action btn-pause text-danger"><i class="ri-pause-circle-line" title="'.__("Pause").'"></i></a>';
+					$result = '<a href="' . get_module_url("bulk_schedule_action/" . $ids . "/0") . '" class="btn-wa-schedule-action btn-pause text-danger"><i class="ri-pause-circle-line" title="' . __("Pause") . '"></i></a>';
 					break;
-				
+
 				default:
 					$status = ['status' => 2, 'running' => 0];
-					$result = '<div class="btn-success text-success"><i class="ri-check-double-line" title="'.__('Complete').'"></i></div>';
+					$result = '<div class="btn-success text-success"><i class="ri-check-double-line" title="' . __('Complete') . '"></i></div>';
 					break;
 			}
 
@@ -1592,31 +1798,33 @@ class whatsapp extends MY_Controller {
 		]);
 	}
 
-	public function bulk_report($ids = ""){
+	public function bulk_report($ids = "")
+	{
 		$result = $this->model->get_report($ids);
-		if( empty( $result )){
+		if (empty($result)) {
 			return false;
 		}
-		$file=$result->name.".xls";
-		$report=view("pages/sub/campaign_report_template", [ 'result' => $result ], true);
+		$file = $result->name . ".xls";
+		$report = view("pages/sub/campaign_report_template", ['result' => $result], true);
 		header("Content-type: application/vnd.ms-excel");
 		header("Content-Disposition: attachment; filename=$file");
 		echo $report;
 	}
 
-	public function bulk_report_by_day(){
+	public function bulk_report_by_day()
+	{
 		$result = $this->model->get_report_by_day();
-		$file="campaign_report.xls";
-		$report=view("pages/sub/campaign_report_by_day_template", [ 'result' => $result ], true);
+		$file = "campaign_report.xls";
+		$report = view("pages/sub/campaign_report_by_day_template", ['result' => $result], true);
 		header("Content-type: application/vnd.ms-excel");
 		header("Content-Disposition: attachment; filename=$file");
 		echo $report;
 	}
 
-	public function cron_bk(  )
+	public function cron_bk()
 	{
 		$posts = $this->model->get_bulk_posts();
-		if(!$posts){ 
+		if (!$posts) {
 			_e("Empty schedule");
 			exit(0);
 		}
@@ -1640,8 +1848,8 @@ class whatsapp extends MY_Controller {
 			$status = $post->status;
 			$changed = $post->changed;
 			$created = $post->created;
-			$username = $post->username."@c.us";
-			$phone_number = $post->username."@c.us";
+			$username = $post->username . "@c.us";
+			$phone_number = $post->username . "@c.us";
 
 			$phone_numbers = [];
 			$this->db->select("*");
@@ -1649,10 +1857,10 @@ class whatsapp extends MY_Controller {
 			$this->db->where("pid = '{$contact_group_id}'");
 			$this->db->where_not_in("phone", $result);
 			$query = $this->db->get();
-			if($query->result()){
+			if ($query->result()) {
 				$phone_numbers = $query->result();
 
-				if(empty($phone_numbers)){
+				if (empty($phone_numbers)) {
 					$this->db->update(
 						$this->tb_whatsapp_schedules,
 						[
@@ -1661,7 +1869,7 @@ class whatsapp extends MY_Controller {
 						['id' => $id]
 					);
 				}
-			}else{
+			} else {
 				$this->db->update(
 					$this->tb_whatsapp_schedules,
 					[
@@ -1673,56 +1881,56 @@ class whatsapp extends MY_Controller {
 
 			$team = $this->model->get("ids", $this->tb_team, "id = '{$team_id}'");
 			$stats = $this->model->get("*", $this->tb_whatsapp_stats, "team_id = '{$team->ids}'");
-		 	$phone_number_index = array_rand($phone_numbers);
-		 	$phone_number = $phone_numbers[$phone_number_index]->phone;
-		 	$chat_id = $phone_number."@c.us";
-		 	$server_url = get_option('whatsapp_server_url', '');
+			$phone_number_index = array_rand($phone_numbers);
+			$phone_number = $phone_numbers[$phone_number_index]->phone;
+			$chat_id = $phone_number . "@c.us";
+			$server_url = get_option('whatsapp_server_url', '');
 
-		 	$media = json_decode($media);
+			$media = json_decode($media);
 
-		 	if(empty($media)){
-				$response = json_decode( wa_post_curl( $server_url."send_message?type=chat&chat_id=".$chat_id."&instance_id=".$instance_id."&access_token=".$team->ids, [
+			if (empty($media)) {
+				$response = json_decode(wa_post_curl($server_url . "send_message?type=chat&chat_id=" . $chat_id . "&instance_id=" . $instance_id . "&access_token=" . $team->ids, [
 					"body" => $body,
 					"chat_id" => $chat_id
-				] ) );
-		 	}else{
-		 		$filename = end( explode("/", $media[0]) );
+				]));
+			} else {
+				$filename = end(explode("/", $media[0]));
 
-		 		$response = json_decode( wa_post_curl( $server_url."send_message?type=media&chat_id=".$chat_id."&instance_id=".$instance_id."&access_token=".$team->ids, [
+				$response = json_decode(wa_post_curl($server_url . "send_message?type=media&chat_id=" . $chat_id . "&instance_id=" . $instance_id . "&access_token=" . $team->ids, [
 					"body" => wa_base64($media[0]),
 					"chat_id" => $chat_id,
 					"caption" => $body,
 					"filename" => $filename,
-				] ) );
-		 	}
+				]));
+			}
 
-			if(empty($result)){
+			if (empty($result)) {
 				$update_phone_list = [$phone_number];
-			}else{
+			} else {
 				$update_phone_list = $result;
 				$update_phone_list[] = $phone_number;
 			}
 
-			$data_update = [ "result" => json_encode($update_phone_list) ];
+			$data_update = ["result" => json_encode($update_phone_list)];
 
-			if(!empty($response) && $response->status == "success"){
+			if (!empty($response) && $response->status == "success") {
 				$new_sent = 1;
 				$new_failed = 0;
-				$this->db->update( $this->tb_whatsapp_stats, [ "wa_bulk_sent_count" => (int)$stats->wa_bulk_sent_count + 1 ] , [ "id" => $stats->id ]);
-			}else{
+				$this->db->update($this->tb_whatsapp_stats, ["wa_bulk_sent_count" => (int)$stats->wa_bulk_sent_count + 1], ["id" => $stats->id]);
+			} else {
 				$new_sent = 0;
 				$new_failed = 1;
-				$this->db->update( $this->tb_whatsapp_stats, [ "wa_bulk_failed_count" => (int)$stats->wa_bulk_failed_count + 1 ] , [ "id" => $stats->id ]);
+				$this->db->update($this->tb_whatsapp_stats, ["wa_bulk_failed_count" => (int)$stats->wa_bulk_failed_count + 1], ["id" => $stats->id]);
 			}
 
-			$this->db->update( $this->tb_whatsapp_stats, [ "wa_bulk_total_count" => (int)$stats->wa_bulk_total_count + 1 ] , [ "id" => $stats->id ]);
+			$this->db->update($this->tb_whatsapp_stats, ["wa_bulk_total_count" => (int)$stats->wa_bulk_total_count + 1], ["id" => $stats->id]);
 
 			$total_sent = $sent + $new_sent;
 			$total_failed = $failed + $new_failed;
 			$total_complete = $total_sent + $total_failed;
 
 			$count = $this->model->get("count(*) as count", $this->tb_whatsapp_phone_numbers, "pid = '{$contact_group_id}'")->count;
-			if($total_complete == $count){
+			if ($total_complete == $count) {
 				$this->db->update(
 					$this->tb_whatsapp_schedules,
 					[
@@ -1732,10 +1940,10 @@ class whatsapp extends MY_Controller {
 				);
 			}
 
-			$next_time = $time_post + ( rand($min_delay,$max_delay) * 60 );
+			$next_time = $time_post + (rand($min_delay, $max_delay) * 60);
 
-			if($next_time < time() ){
-				$next_time = time() + ( rand($min_delay,$max_delay) * 60 );
+			if ($next_time < time()) {
+				$next_time = time() + (rand($min_delay, $max_delay) * 60);
 			}
 
 			$this->db->update(
@@ -1751,11 +1959,11 @@ class whatsapp extends MY_Controller {
 		}
 
 		_e("Success");
-
 	}
 
 	/*CHATBOT*/
-	public function chatbot_save(){
+	public function chatbot_save()
+	{
 		$team_id = _t("id");
 		$ids = post("ids");
 		$type = post("type");
@@ -1764,8 +1972,8 @@ class whatsapp extends MY_Controller {
 		$template = 0;
 		$btn_msg = (int)post("btn_msg");
 		$list_msg = (int)post("list_msg");
-		$keywords = post("keywords");  
-		$caption = post("caption");  
+		$keywords = post("keywords");
+		$caption = post("caption");
 		$medias = post("media");
 		$send_to = (int)post('send_to');
 		$status = (int)post("status");
@@ -1781,7 +1989,7 @@ class whatsapp extends MY_Controller {
 		$account = $this->model->get("*", $this->tb_account_manager, "token = '{$instance_id}' AND team_id = '{$team_id}'");
 		validate('empty', __('Please select at least a profile'), $account);
 
-		if( $account->status == 0 ){
+		if ($account->status == 0) {
 			wa_ms([
 				"status" => "error",
 				"message" => __("Relogin is required")
@@ -1790,20 +1998,20 @@ class whatsapp extends MY_Controller {
 
 		switch ($cate) {
 			case 1:
-				if( _p("whatsapp_chatbot_media") ){
-					if(!is_array($medias) && $caption == ""){
+				if (_p("whatsapp_chatbot_media")) {
+					if (!is_array($medias) && $caption == "") {
 						wa_ms([
 							"status" => "error",
 							"message" => __('Please enter a caption or add a media')
 						]);
 					}
-				}else{
+				} else {
 					validate('null', __('Caption'), $caption);
 				}
 				break;
 
 			case 2:
-				if($btn_msg == 0){
+				if ($btn_msg == 0) {
 					wa_ms([
 						"status" => "error",
 						"message" => __('Please select a button message option')
@@ -1813,7 +2021,7 @@ class whatsapp extends MY_Controller {
 				break;
 
 			case 3:
-				if($list_msg == 0){
+				if ($list_msg == 0) {
 					wa_ms([
 						"status" => "error",
 						"message" => __('Please select a list message option')
@@ -1822,9 +2030,9 @@ class whatsapp extends MY_Controller {
 
 				$template = $list_msg;
 				break;
-			
+
 			default:
-				if($btn_msg == 0){
+				if ($btn_msg == 0) {
 					wa_ms([
 						"status" => "error",
 						"message" => __('Invalid input data')
@@ -1835,13 +2043,13 @@ class whatsapp extends MY_Controller {
 
 		$run = 0;
 		$chatbot_item = $this->model->get("*", $this->tb_whatsapp_chatbot, "instance_id = '{$instance_id}' AND team_id = '{$team_id}'");
-		if(!empty($chatbot_item) && $chatbot_item->run){
+		if (!empty($chatbot_item) && $chatbot_item->run) {
 			$run = 1;
 		}
 
 		$keywords = wa_keyword_trim($keywords);
-		
-		if(!empty($item)){
+
+		if (!empty($item)) {
 			$data = [
 				"team_id" => $team_id,
 				"instance_id" => $instance_id,
@@ -1851,7 +2059,7 @@ class whatsapp extends MY_Controller {
 				"template" => $template,
 				"keywords" => mb_strtolower($keywords),
 				"caption" => $caption,
-				"media" => empty($medias)?"[]":json_encode($medias),
+				"media" => empty($medias) ? "[]" : json_encode($medias),
 				"path" => FCPATH,
 				"run" => $run,
 				"send_to" => $send_to,
@@ -1859,8 +2067,8 @@ class whatsapp extends MY_Controller {
 				"changed" => now()
 			];
 
-			$result = $this->db->update( $this->tb_whatsapp_chatbot, $data, ["id" => $item->id]);
-		}else{
+			$result = $this->db->update($this->tb_whatsapp_chatbot, $data, ["id" => $item->id]);
+		} else {
 			$data = [
 				"ids" => ids(),
 				"team_id" => $team_id,
@@ -1871,7 +2079,7 @@ class whatsapp extends MY_Controller {
 				"template" => $template,
 				"keywords" => mb_strtolower($keywords),
 				"caption" => $caption,
-				"media" => empty($medias)?"[]":json_encode($medias),
+				"media" => empty($medias) ? "[]" : json_encode($medias),
 				"path" => FCPATH,
 				"run" => $run,
 				"send_to" => $send_to,
@@ -1880,7 +2088,7 @@ class whatsapp extends MY_Controller {
 				"created" => now()
 			];
 
-			$result = $this->db->insert( $this->tb_whatsapp_chatbot, $data);
+			$result = $this->db->insert($this->tb_whatsapp_chatbot, $data);
 		}
 
 		wa_ms([
@@ -1889,17 +2097,18 @@ class whatsapp extends MY_Controller {
 		]);
 	}
 
-	public function chatbot_status(){
+	public function chatbot_status()
+	{
 		$team_id = _t('id');
 		$instance_id = post("instance_id");
 		$access_token = post("access_token");
 
 		$chatbot_item = $this->model->get("*", $this->tb_whatsapp_chatbot, "instance_id = '{$instance_id}' AND team_id = '{$team_id}'");
-		if(!empty($chatbot_item)){
-			if($chatbot_item->run){
-				$this->db->update($this->tb_whatsapp_chatbot, [ 'run' => 0 ], [ 'instance_id' => $instance_id ]);
-			}else{
-				$this->db->update($this->tb_whatsapp_chatbot, [ 'run' => 1 ], [ 'instance_id' => $instance_id ]);
+		if (!empty($chatbot_item)) {
+			if ($chatbot_item->run) {
+				$this->db->update($this->tb_whatsapp_chatbot, ['run' => 0], ['instance_id' => $instance_id]);
+			} else {
+				$this->db->update($this->tb_whatsapp_chatbot, ['run' => 1], ['instance_id' => $instance_id]);
 			}
 		}
 

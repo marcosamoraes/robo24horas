@@ -15,7 +15,7 @@ class upload_files extends MY_Controller
 		$max_size = _p("max_file_size") * 1024;
 
 		if (_p("file_manager_photo") && !_p("file_manager_video")) {
-			$support_types = 'gif|jpg|jpeg|png';
+			$support_types = 'gif|jpg|jpeg|png|pdf|ogg|mp3';
 		}
 
 		if (_p("file_manager_video") && !_p("file_manager_photo")) {
@@ -27,7 +27,7 @@ class upload_files extends MY_Controller
 		}
 
 		if (!_p("file_manager_video")  && !_p("file_manager_video")) {
-			$support_types = 'pdf|ogg|mp3';
+			$support_types = '';
 		}
 
 		$config['upload_path']          = get_upload_path();

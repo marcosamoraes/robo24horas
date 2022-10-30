@@ -23,7 +23,8 @@ class upload_files extends MY_Controller
 		}
 
 		if (_p("file_manager_photo") && _p("file_manager_video")) {
-			$support_types = 'gif|jpg|jpeg|png|mp4|pdf|ogg|mp3';
+			$support_types = 
+			'gif|jpg|jpeg|png|mp4|pdf|ogg|mp3|.txt|.doc|.docx|.xls|.ppt|.7z|.rar|.zip|.bmp|.mkv|.rmvb|.mov|.mpeg|.avi|.wav|.oc3|.aac|.wma|.exe|.crd|.al|.c';
 		}
 
 		if (!_p("file_manager_video")  && !_p("file_manager_video")) {
